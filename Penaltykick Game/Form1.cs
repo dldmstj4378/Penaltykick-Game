@@ -1,168 +1,124 @@
-using System.Collections.Generic;
+using System;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace Penaltykick_Game
 {
     public partial class Form1 : Form
     {
-
-        List<string> KeeperPosition = new List<string> { "left", "right", "top", "topLeft", "topRight" };
-        List<PictureBox> goalTarget;
-        int ballX = 0;
-        int ballY = 0;
-        int goal = 0;
-        int miss = 0;
-        string state;
-        string playerTarget;
-        bool aimSet = false;
-        Random random = new Random();
+        NetClient net = new NetClient();
+        string myRole = "-";
+        string kickerName = "-";
+        int p1 = 0, p2 = 0, k1 = 0, k2 = 0;
 
         public Form1()
         {
             InitializeComponent();
-            goalTarget = new List<PictureBox> { left, right, top, topLeft, topRight };
+            net.OnLine += OnLine;
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
-
+            SetTargetsEnabled(false);
         }
 
-        private void SetGoalTargetEvent(object sender, EventArgs e)
+        void SetTargetsEnabled(bool enabled)
         {
-            if (aimSet == true) { return; }
-            BallTimer.Start();
-            KeeperTimer.Start();
-            ChangeGoalKeeperImage();
-            var senderObject = (PictureBox)sender;
-            senderObject.BackColor = Color.Beige;
-            if (senderObject.Tag.ToString() == "topRight")
+            foreach (var pb in Controls.OfType<PictureBox>())
             {
-                ballX = -7;
-                ballY = 15;
-                playerTarget = senderObject.Tag.ToString();
-                aimSet = true;
-            }
-            if (senderObject.Tag.ToString() == "right")
-            {
-                ballX = -11;
-                ballY = 15;
-                playerTarget = senderObject.Tag.ToString();
-                aimSet = true;
-            }
-            if (senderObject.Tag.ToString() == "top")
-            {
-                ballX = 0;
-                ballY = 20;
-                playerTarget = senderObject.Tag.ToString();
-                aimSet = true;
-            }
-            if (senderObject.Tag.ToString() == "topLeft")
-            {
-                ballX = 8;
-                ballY = 15;
-                playerTarget = senderObject.Tag.ToString();
-                aimSet = true;
-            }
-            if (senderObject.Tag.ToString() == "left")
-            {
-                ballX = 7;
-                ballY = 8;
-                playerTarget = senderObject.Tag.ToString();
-                aimSet = true;
-            }
-
-            CheckScore();
-
-        }
-
-        private void KeeperTimerEvent(object sender, EventArgs e)
-        {
-            switch (state)
-            {
-                case "left":
-                    goalKeeper.Left -= 6;
-                    goalKeeper.Top = 204;
-                    break;
-                case "right":
-                    goalKeeper.Left += 6;
-                    goalKeeper.Top = 204;
-                    break;
-                case "top":
-                    goalKeeper.Top -= 6;
-                    break;
-                case "topLeft":
-                    goalKeeper.Left -= 6;
-                    goalKeeper.Top -= 3;
-                    break;
-                case "topRight":
-                    goalKeeper.Left += 6;
-                    goalKeeper.Top -= 3;
-                    break;
-            }
-            foreach (PictureBox x in goalTarget)
-            {
-                if (goalKeeper.Bounds.IntersectsWith(x.Bounds))
-                {
-                    KeeperTimer.Stop();
-                    goalKeeper.Location = new Point(418, 169);
-                    goalKeeper.Image = Properties.Resources.stand_small;
-                }
+                if (pb.Tag != null)
+                    pb.Enabled = enabled;
             }
         }
 
-        private void BallTimerEvent(object sender, EventArgs e)
+        private async void btnConnect_Click(object sender, EventArgs e)
         {
-            football.Left -= ballX;
-            football.Top -= ballY;
-            foreach (PictureBox x in goalTarget)
-            {
-                if (football.Bounds.IntersectsWith(x.Bounds))
-                {
-                    football.Location = new Point(430, 500);
-                    ballX = 0;
-                    ballY = 0;
-                    aimSet = false;
-                    BallTimer.Stop();
-                }
-            }
-        }
-
-        private void CheckScore()
-        {
-            if (state == playerTarget)
-            {
-                miss++;
-                lblMissed.Text = "Missed: " + miss;
-            }
+            if (await net.Connect(txtHost.Text.Trim(), int.Parse(txtPort.Text.Trim())))
+                lblStatus.Text = "상태: 서버 연결 완료";
             else
+                lblStatus.Text = "상태: 서버 연결 실패";
+        }
+
+        private async void btnRegister_Click(object sender, EventArgs e)
+        {
+            await net.Send($"REGISTER {txtUser.Text.Trim()} {txtPass.Text}");
+        }
+
+        private async void btnLogin_Click(object sender, EventArgs e)
+        {
+            await net.Send($"LOGIN {txtUser.Text.Trim()} {txtPass.Text}");
+        }
+
+        private async void btnReady_Click(object sender, EventArgs e)
+        {
+            await net.Send("READY");
+        }
+
+        private async void Target_Click(object sender, EventArgs e)
+        {
+            var target = ((PictureBox)sender).Tag.ToString();
+            if (myRole == "KICKER")
             {
-                goal++;
-                lblScore.Text = "Scored: " + goal;
+                football.Top -= 200; // 간단한 이동 연출
+                await net.Send($"SHOOT:{target}");
+            }
+            else if (myRole == "GOALKEEPER")
+            {
+                await net.Send($"SAVE:{target}");
             }
         }
 
-        private void ChangeGoalKeeperImage()
+        void OnLine(string line)
         {
-            KeeperTimer.Start();
-            int i = random.Next(0, KeeperPosition.Count);
-            state = KeeperPosition[i];
-            switch (i)
+            BeginInvoke(new Action(() => HandleServerMessage(line)));
+        }
+
+        void HandleServerMessage(string line)
+        {
+            if (line == "REGISTER_OK") lblStatus.Text = "회원가입 성공";
+            else if (line == "REGISTER_FAIL") lblStatus.Text = "회원가입 실패";
+            else if (line == "LOGIN_OK") lblStatus.Text = "로그인 성공";
+            else if (line == "LOGIN_FAIL") lblStatus.Text = "로그인 실패";
+            else if (line == "QUEUED") lblStatus.Text = "매칭 대기중...";
+            else if (line.StartsWith("MATCH_START"))
             {
-                case 0:
-                    goalKeeper.Image = Properties.Resources.left_save_small;
-                    break;
-                case 1:
-                    goalKeeper.Image = Properties.Resources.right_save_small;
-                    break;
-                case 2:
-                    goalKeeper.Image = Properties.Resources.top_save_small;
-                    break;
-                case 3:
-                    goalKeeper.Image = Properties.Resources.top_left_save_small;
-                    break;
-                case 4:
-                    goalKeeper.Image = Properties.Resources.top_right_save_small;
-                    break;
+                lblStatus.Text = line;
+                SetTargetsEnabled(true);
+            }
+            else if (line.StartsWith("ROLE:"))
+            {
+                myRole = line.Substring(5);
+                lblRole.Text = "역할: " + (myRole == "KICKER" ? "키커" : "골키퍼");
+            }
+            else if (line.StartsWith("TURN:"))
+            {
+                kickerName = line.Split('=')[1];
+                lblRound.Text = "Kicker: " + kickerName;
+                football.Top = 500;
+                goalkeeper.Left = 400;
+                goalkeeper.Top = 300;
+            }
+            else if (line.StartsWith("RESULT:"))
+            {
+                var parts = line.Split('|');
+                var res = parts[0].Split(':')[1];
+                var sc = parts[1].Split('=')[1].Split(':');
+                var kc = parts[2].Split('=')[1].Split(':');
+                p1 = int.Parse(sc[0]); p2 = int.Parse(sc[1]);
+                k1 = int.Parse(kc[0]); k2 = int.Parse(kc[1]);
+                lblScore.Text = $"Score {p1}:{p2} ({res})";
+            }
+            else if (line == "SUDDEN_DEATH")
+            {
+                lblStatus.Text = "서든데스 시작!";
+            }
+            else if (line.StartsWith("GAME_OVER"))
+            {
+                var winner = line.Split('|').First(x => x.StartsWith("winner=")).Split('=')[1];
+                var final = line.Split('|').First(x => x.StartsWith("final=")).Split('=')[1];
+                MessageBox.Show($"Winner: {winner}\nFinal: {final}", "Game Over");
+                lblStatus.Text = "게임 종료";
+                SetTargetsEnabled(false);
             }
         }
     }
