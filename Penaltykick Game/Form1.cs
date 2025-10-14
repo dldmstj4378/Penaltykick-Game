@@ -1,4 +1,4 @@
-using System;
+Ôªøusing System;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -7,36 +7,128 @@ namespace Penaltykick_Game
     public partial class Form1 : Form
     {
         NetClient net = new NetClient();
+        private List<PictureBox> goalTarget;
         string myRole = "-";
         string kickerName = "-";
-        int p1 = 0, p2 = 0, k1 = 0, k2 = 0;
+        int p1 = 0, p2 = 0;
+        private System.Windows.Forms.Timer? shootTimer;
+        private System.Windows.Forms.Timer? keeperTimer;
+
 
         public Form1()
         {
-            InitializeComponent();
-            net.OnLine += OnLine;
+            InitializeComponent();   // Ìèº ÎîîÏûêÏù¥ÎÑà Ï¥àÍ∏∞Ìôî (Í∞ÄÏû• Î®ºÏ†Ä!)
+
+            // üü° 1. ÌÉÄÍ≤ü PictureBox ÏÉùÏÑ±
+            topLeft = new PictureBox();
+            top = new PictureBox();
+            topRight = new PictureBox();
+            left = new PictureBox();
+            right = new PictureBox();
+
+            // üü° 2. Í∞Å PictureBox ÏÜçÏÑ± ÏÑ§Ï†ï (ÏúÑÏπò, ÌÅ¨Í∏∞, ÏÉâ Îì±)
+            topLeft.Size = new Size(50, 50);
+            topLeft.Location = new Point(180, 100);
+            topLeft.BackColor = Color.Yellow;
+            topLeft.SizeMode = PictureBoxSizeMode.StretchImage;
+
+            top.Size = new Size(50, 50);
+            top.Location = new Point(370, 100);
+            top.BackColor = Color.Yellow;
+            top.SizeMode = PictureBoxSizeMode.StretchImage;
+
+            topRight.Size = new Size(50, 50);
+            topRight.Location = new Point(560, 100);
+            topRight.BackColor = Color.Yellow;
+            topRight.SizeMode = PictureBoxSizeMode.StretchImage;
+
+            left.Size = new Size(50, 50);
+            left.Location = new Point(200, 270);
+            left.BackColor = Color.Yellow;
+            left.SizeMode = PictureBoxSizeMode.StretchImage;
+
+            right.Size = new Size(50, 50);
+            right.Location = new Point(540, 270);
+            right.BackColor = Color.Yellow;
+            right.SizeMode = PictureBoxSizeMode.StretchImage;
+
+            // üü° 3. ÌèºÏóê Ï∂îÍ∞Ä (Ïã§Ï†úÎ°ú Î≥¥Ïó¨ÏßÄÍ≤å ÌïòÍ∏∞)
+            this.Controls.Add(topLeft);
+            this.Controls.Add(top);
+            this.Controls.Add(topRight);
+            this.Controls.Add(left);
+            this.Controls.Add(right);
+
+            // üü° 4. goalTarget Î¶¨Ïä§Ìä∏Ïóê Îã¥Í∏∞ (Í≥µÌÜµ Ï†úÏñ¥Ïö©)
+            goalTarget = new List<PictureBox> { topLeft, top, topRight, left, right };
         }
 
-        private async void Form1_Load(object sender, EventArgs e)
-        {
-            SetTargetsEnabled(false);
-        }
 
-        void SetTargetsEnabled(bool enabled)
+
+
+        private void ChangeGoalKeeperImage(string direction)
         {
-            foreach (var pb in Controls.OfType<PictureBox>())
+            switch (direction)
             {
-                if (pb.Tag != null)
-                    pb.Enabled = enabled;
+                case "left":
+                    goalKeeper.Image = Properties.Resources.left_save_small;
+                    break;
+                case "right":
+                    goalKeeper.Image = Properties.Resources.right_save_small;
+                    break;
+                case "top":
+                    goalKeeper.Image = Properties.Resources.top_save_small;
+                    break;
+                case "topLeft":
+                    goalKeeper.Image = Properties.Resources.top_left_save_small;
+                    break;
+                case "topRight":
+                    goalKeeper.Image = Properties.Resources.top_right_save_small;
+                    break;
+                default:
+                    goalKeeper.Image = Properties.Resources.stand_small;
+                    break;
             }
         }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            InitializePositions();
+            SetTargetsEnabled(false);
+
+            // Z-Order Î≥¥Ï†ï
+            topLeft.BringToFront();
+            top.BringToFront();
+            topRight.BringToFront();
+            left.BringToFront();
+            right.BringToFront();
+            football.BringToFront();
+            goalKeeper.BringToFront();
+        }
+
+        private void InitializePositions()
+        {
+            // Í≥µ ÏúÑÏπò Ï¥àÍ∏∞Ìôî
+            football.Location = new Point(430, 500);
+
+            // Í≥®ÌÇ§Ìçº ÏúÑÏπò Ï¥àÍ∏∞Ìôî
+            goalKeeper.Location = new Point(418, 169);
+            goalKeeper.Image = Properties.Resources.stand_small;
+
+            // ÌÉÄÍ≤ü ÏÉâÏÉÅ Ï¥àÍ∏∞Ìôî
+            foreach (PictureBox target in goalTarget)
+            {
+                target.BackColor = Color.Yellow;
+            }
+        }
+
 
         private async void btnConnect_Click(object sender, EventArgs e)
         {
             if (await net.Connect(txtHost.Text.Trim(), int.Parse(txtPort.Text.Trim())))
-                lblStatus.Text = "ªÛ≈¬: º≠πˆ ø¨∞· øœ∑·";
+                lblStatus.Text = "ÏÉÅÌÉú: ÏÑúÎ≤Ñ Ïó∞Í≤∞ ÏôÑÎ£å";
             else
-                lblStatus.Text = "ªÛ≈¬: º≠πˆ ø¨∞· Ω«∆–";
+                lblStatus.Text = "ÏÉÅÌÉú: ÏÑúÎ≤Ñ Ïó∞Í≤∞ Ïã§Ìå®";
         }
 
         private async void btnRegister_Click(object sender, EventArgs e)
@@ -56,70 +148,161 @@ namespace Penaltykick_Game
 
         private async void Target_Click(object sender, EventArgs e)
         {
-            var target = ((PictureBox)sender).Tag.ToString();
+            string target = ((PictureBox)sender).Tag.ToString()!;
             if (myRole == "KICKER")
-            {
-                football.Top -= 200; // ∞£¥‹«— ¿Ãµø ø¨√‚
                 await net.Send($"SHOOT:{target}");
-            }
             else if (myRole == "GOALKEEPER")
-            {
                 await net.Send($"SAVE:{target}");
-            }
+
+            // ÎÇ¥ ÏÑ†ÌÉù Îí§ÏóêÎäî ÎπÑÌôúÏÑ±Ìôî (ÏÉÅÎåÄ/ÌÉÄÏù¥Î®∏ ÎåÄÍ∏∞)
+            SetTargetsEnabled(false);
         }
 
-        void OnLine(string line)
-        {
-            BeginInvoke(new Action(() => HandleServerMessage(line)));
-        }
+        private void OnLine(string line) => BeginInvoke(new Action(() => HandleServerMessage(line)));
 
-        void HandleServerMessage(string line)
+        private void HandleServerMessage(string line)
         {
-            if (line == "REGISTER_OK") lblStatus.Text = "»∏ø¯∞°¿‘ º∫∞¯";
-            else if (line == "REGISTER_FAIL") lblStatus.Text = "»∏ø¯∞°¿‘ Ω«∆–";
-            else if (line == "LOGIN_OK") lblStatus.Text = "∑Œ±◊¿Œ º∫∞¯";
-            else if (line == "LOGIN_FAIL") lblStatus.Text = "∑Œ±◊¿Œ Ω«∆–";
-            else if (line == "QUEUED") lblStatus.Text = "∏≈ƒ™ ¥Î±‚¡ﬂ...";
+            if (line == "REGISTER_OK") lblStatus.Text = "ÌöåÏõêÍ∞ÄÏûÖ ÏÑ±Í≥µ";
+            else if (line == "REGISTER_FAIL") lblStatus.Text = "ÌöåÏõêÍ∞ÄÏûÖ Ïã§Ìå®";
+            else if (line == "LOGIN_OK") lblStatus.Text = "Î°úÍ∑∏Ïù∏ ÏÑ±Í≥µ";
+            else if (line == "LOGIN_FAIL") lblStatus.Text = "Î°úÍ∑∏Ïù∏ Ïã§Ìå®";
+            else if (line == "QUEUED") lblStatus.Text = "Îß§Ïπ≠ ÎåÄÍ∏∞Ï§ë...";
             else if (line.StartsWith("MATCH_START"))
             {
                 lblStatus.Text = line;
-                SetTargetsEnabled(true);
+                InitializePositions();
             }
             else if (line.StartsWith("ROLE:"))
             {
                 myRole = line.Substring(5);
-                lblRole.Text = "ø™«“: " + (myRole == "KICKER" ? "≈∞ƒø" : "∞Ò≈∞∆€");
+                lblRole.Text = "Ïó≠Ìï†: " + (myRole == "KICKER" ? "ÌÇ§Ïª§" : "Í≥®ÌÇ§Ìçº");
+                InitializePositions();
             }
             else if (line.StartsWith("TURN:"))
             {
                 kickerName = line.Split('=')[1];
                 lblRound.Text = "Kicker: " + kickerName;
-                football.Top = 500;
-                goalkeeper.Left = 400;
-                goalkeeper.Top = 300;
+                InitializePositions();
             }
+
+            else if (line.StartsWith("ROUND_START"))
+            {
+                var parts = line.Split('|');
+                int roundNum = int.Parse(parts[1].Split('=')[1]);
+                lblStatus.Text = $"{roundNum} ÎùºÏö¥Îìú ÏãúÏûë! (10Ï¥à ÏïàÏóê ÏÑ†ÌÉù)";
+                SetTargetsEnabled(true);
+                InitializePositions();
+            }
+
+
             else if (line.StartsWith("RESULT:"))
             {
                 var parts = line.Split('|');
-                var res = parts[0].Split(':')[1];
-                var sc = parts[1].Split('=')[1].Split(':');
-                var kc = parts[2].Split('=')[1].Split(':');
-                p1 = int.Parse(sc[0]); p2 = int.Parse(sc[1]);
-                k1 = int.Parse(kc[0]); k2 = int.Parse(kc[1]);
-                lblScore.Text = $"Score {p1}:{p2} ({res})";
+                string result = parts[0].Split(':')[1];
+                string[] sc = parts[1].Split('=')[1].Split(':');
+                string shooterDir = parts[2].Split('=')[1];
+                string keeperDir = parts[3].Split('=')[1];
+
+                p1 = int.Parse(sc[0]);
+                p2 = int.Parse(sc[1]);
+                lblScore.Text = $"Score {p1}:{p2}";
+
+                AnimateShoot(shooterDir);
+                ChangeGoalKeeperImage(keeperDir);
+
+                lblStatus.Text = result == "goal" ? "‚öΩ Í≥®!" : "üß§ ÏÑ∏Ïù¥Î∏å!";
+
+                var delayTimer = new System.Windows.Forms.Timer { Interval = 2000 };
+                delayTimer.Tick += (s, e) =>
+                {
+                    delayTimer.Stop();
+                    InitializePositions();
+                    SetTargetsEnabled(false);
+                };
+                delayTimer.Start();
             }
-            else if (line == "SUDDEN_DEATH")
-            {
-                lblStatus.Text = "º≠µÁµ•Ω∫ Ω√¿€!";
-            }
+
+
+
             else if (line.StartsWith("GAME_OVER"))
             {
+                shootTimer?.Stop();
+                keeperTimer?.Stop();
+
+                InitializePositions(); // Í≥µ & Í≥®ÌÇ§Ìçº ÏõêÏúÑÏπò
+                SetTargetsEnabled(false);
+
                 var winner = line.Split('|').First(x => x.StartsWith("winner=")).Split('=')[1];
                 var final = line.Split('|').First(x => x.StartsWith("final=")).Split('=')[1];
                 MessageBox.Show($"Winner: {winner}\nFinal: {final}", "Game Over");
-                lblStatus.Text = "∞‘¿” ¡æ∑·";
-                SetTargetsEnabled(false);
+                lblStatus.Text = "Í≤åÏûÑ Ï¢ÖÎ£å";
             }
         }
+
+
+
+        private void SetTargetsEnabled(bool enabled)
+        {
+            foreach (var pb in new[] { topLeft, top, topRight, left, right })
+                pb.Enabled = enabled;
+        }
+
+        private void AnimateShoot(string direction)
+        {
+            int targetX = football.Left;
+            int targetY = goalBackground.Top + 180;
+
+            switch (direction)
+            {
+                case "left": targetX = goalBackground.Left + 200; break;
+                case "right": targetX = goalBackground.Left + 500; break;
+                case "top": targetX = goalBackground.Left + 350; targetY = goalBackground.Top + 100; break;
+                case "topLeft": targetX = goalBackground.Left + 200; targetY = goalBackground.Top + 100; break;
+                case "topRight": targetX = goalBackground.Left + 500; targetY = goalBackground.Top + 100; break;
+            }
+
+            shootTimer?.Stop();
+            shootTimer = new System.Windows.Forms.Timer { Interval = 10 };
+            shootTimer.Tick += (s, e) =>
+            {
+                football.Left += (targetX - football.Left) / 10;
+                football.Top += (targetY - football.Top) / 10;
+                if (Math.Abs(football.Left - targetX) < 5 && Math.Abs(football.Top - targetY) < 5)
+                {
+                    shootTimer.Stop();
+                }
+            };
+            shootTimer.Start();
+        }
+
+
+        private void AnimateGoalkeeper(string direction)
+        {
+            int targetX = goalKeeper.Left;
+            int targetY = goalKeeper.Top;
+
+            switch (direction)
+            {
+                case "left": targetX = goalBackground.Left + 250; break;
+                case "right": targetX = goalBackground.Left + 450; break;
+                case "top": targetY = goalBackground.Top + 200; break;
+                case "topLeft": targetX = goalBackground.Left + 250; targetY = goalBackground.Top + 200; break;
+                case "topRight": targetX = goalBackground.Left + 450; targetY = goalBackground.Top + 200; break;
+            }
+
+            keeperTimer?.Stop();
+            keeperTimer = new System.Windows.Forms.Timer { Interval = 10 };
+            keeperTimer.Tick += (s, e) =>
+            {
+                goalKeeper.Left += (targetX - goalKeeper.Left) / 10;
+                goalKeeper.Top += (targetY - goalKeeper.Top) / 10;
+                if (Math.Abs(goalKeeper.Left - targetX) < 5 && Math.Abs(goalKeeper.Top - targetY) < 5)
+                {
+                    keeperTimer.Stop();
+                }
+            };
+            keeperTimer.Start();
+        }
+
     }
 }
