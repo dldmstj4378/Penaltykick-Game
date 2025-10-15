@@ -270,8 +270,21 @@ namespace Penaltykick_Game
                 var parts = line.Split('|');
                 int roundNum = int.Parse(parts[1].Split('=')[1]);
                 lblStatus.Text = $"{roundNum} 라운드 시작! (10초 안에 선택)";
-                SetTargetsEnabled(true);
+
+                // 🧭 1) 위치 리셋
+                ResetPositions();
+
+                // 🧭 2) UI 초기화 후
                 InitializePositions();
+
+                // 🧭 3) 타겟 활성화 (즉시)
+                SetTargetsEnabledSafe(true);
+
+                // 🧭 4) 안전장치 - 혹시 초기화 타이밍이 밀리는 경우 대비
+                Task.Delay(1000).ContinueWith(_ =>
+                {
+                    SetTargetsEnabledSafe(true);
+                });
             }
             else if (line.StartsWith("RESULT:"))
             {
@@ -290,6 +303,9 @@ namespace Penaltykick_Game
                 ChangeGoalKeeperImage(keeperDir);
 
                 lblStatus.Text = result == "goal" ? "⚽ 골!" : "🧤 세이브!";
+
+                // 클릭 방지
+                SetTargetsEnabledSafe(false);
 
                 var delayTimer = new System.Windows.Forms.Timer { Interval = 2000 };
                 delayTimer.Tick += (s, e) =>
@@ -517,6 +533,18 @@ namespace Penaltykick_Game
             goalKeeper.SizeMode = PictureBoxSizeMode.Zoom;
         }
 
+        private void SetTargetsEnabledSafe(bool enabled)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => SetTargetsEnabledSafe(enabled)));
+                return;
+            }
 
+            foreach (var t in goalTarget)
+            {
+                t.Enabled = enabled;
+            }
+        }
     }
 }
