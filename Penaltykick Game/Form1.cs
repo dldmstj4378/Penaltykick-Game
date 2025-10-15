@@ -24,6 +24,7 @@ namespace Penaltykick_Game
         // 🛑 애니메이션 중복 방지용
         private bool isAnimating = false;
         private System.Windows.Forms.Label lblUserInfo;
+        private string currentRank = "";
 
         public Form1()
         {
@@ -310,6 +311,53 @@ namespace Penaltykick_Game
                 var final = line.Split('|').First(x => x.StartsWith("final=")).Split('=')[1];
                 MessageBox.Show($"Winner: {winner}\nFinal: {final}", "Game Over");
                 lblStatus.Text = "게임 종료";
+
+                // ✅ 게임이 끝나면 서버에 최신 전적 요청
+                _ = net.Send("REQ_RECORD");
+            }
+            else if (line.StartsWith("RECORD "))
+            {
+                string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 5)
+                {
+                    string username = parts[1];
+                    string wins = parts[2];
+                    string losses = parts[3];
+                    string rank = parts[4];
+
+                    // 🔸 이전 랭크 저장 후 변경 확인
+                    string oldRank = currentRank;
+                    currentRank = rank;
+
+                    //string rankIcon = rank switch
+                    //{
+                    //    "Bronze" => "🥉",
+                    //    "Silver" => "🥈",
+                    //    "Gold" => "🥇",
+                    //    "Platinum" => "💠",
+                    //    "Diamond" => "💎",
+                    //    _ => ""
+                    //};
+
+                    //switch (rank)
+                    //{
+                    //    case "Bronze": lblUserInfo.ForeColor = Color.SaddleBrown; break;
+                    //    case "Silver": lblUserInfo.ForeColor = Color.Silver; break;
+                    //    case "Gold": lblUserInfo.ForeColor = Color.Gold; break;
+                    //    case "Platinum": lblUserInfo.ForeColor = Color.LightCyan; break;
+                    //    case "Diamond": lblUserInfo.ForeColor = Color.DeepSkyBlue; break;
+                    //    default: lblUserInfo.ForeColor = Color.White; break;
+                    //}
+
+                    lblUserInfo.Text = $"닉네임 : {username}   승 : {wins}   패 : {losses}   랭크 : {rank}";
+
+                    // 🟡 랭크가 바뀌었으면 메시지 띄우기
+                    if (!string.IsNullOrEmpty(oldRank) && oldRank != currentRank)
+                    {
+                        string msg = $"랭크가 {oldRank} ➝ {currentRank}(으)로 변경되었습니다!";
+                        MessageBox.Show(msg, "랭크 변동", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
             }
         }
 
