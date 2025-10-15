@@ -310,19 +310,39 @@ namespace Penaltykick_Game
         // 🧤 골키퍼 애니메이션
         private void AnimateGoalkeeper(string direction)
         {
-            goalKeeper.Location = initialKeeperPosition;
-            goalKeeper.Size = initialKeeperSize;
+            // 기본 위치 및 크기 초기화
+            goalKeeper.Left = initialKeeperPosition.X;
+            goalKeeper.Top = initialKeeperPosition.Y;
 
             int targetX = goalKeeper.Left;
             int targetY = goalKeeper.Top;
 
             switch (direction)
             {
-                case "left": targetX = goalBackground.Left + 260; break;
-                case "right": targetX = goalBackground.Left + 440; break;
-                case "top": targetY = goalBackground.Top + 200; break;
-                case "topLeft": targetX = goalBackground.Left + 260; targetY = goalBackground.Top + 200; break;
-                case "topRight": targetX = goalBackground.Left + 440; targetY = goalBackground.Top + 200; break;
+                case "left":
+                    targetX = left.Left + 10;      // ← 살짝 왼쪽으로 더 이동
+                    targetY = left.Top - 20;       // ↑ 위로 살짝
+                    break;
+
+                case "right":
+                    targetX = right.Left - 140;     // → 오른쪽으로 더 이동
+                    targetY = right.Top - 25;
+                    break;
+
+                case "topLeft":
+                    targetX = topLeft.Left + 10;   // ← 살짝 왼쪽
+                    targetY = topLeft.Top + 20;    // ↑ 많이 위로
+                    break;
+
+                case "topRight":
+                    targetX = topRight.Left - 110;  // → 살짝 오른쪽
+                    targetY = topRight.Top + 20;
+                    break;
+
+                case "top":
+                    targetX = top.Left - 60;
+                    targetY = top.Top + 20;        // ↑ 정중앙에서 많이 위로
+                    break;
             }
 
             keeperTimer?.Stop();
@@ -341,23 +361,48 @@ namespace Penaltykick_Game
             keeperTimer.Start();
         }
 
+
         private void ChangeGoalKeeperImage(string direction)
         {
+            int diveWidth = 160;
+            int diveHeight = 100;
+
             switch (direction)
             {
                 case "left":
-                    goalKeeper.Image = Properties.Resources.left_save_small; break;
                 case "right":
-                    goalKeeper.Image = Properties.Resources.right_save_small; break;
-                case "top":
-                    goalKeeper.Image = Properties.Resources.top_save_small; break;
+                    goalKeeper.Size = new Size(180, 110);
+                    break;
+
                 case "topLeft":
-                    goalKeeper.Image = Properties.Resources.top_left_save_small; break;
                 case "topRight":
-                    goalKeeper.Image = Properties.Resources.top_right_save_small; break;
+                    goalKeeper.Size = new Size(160, 120);
+                    break;
+
+                case "top":
+                    goalKeeper.Size = new Size(130, 180);
+                    break;
+
                 default:
-                    goalKeeper.Image = Properties.Resources.stand_small; break;
+                    goalKeeper.Size = initialKeeperSize;
+                    break;
             }
+
+            
+
+            switch (direction)
+            {
+                case "left": goalKeeper.Image = Properties.Resources.left_save_small; break;
+                case "right": goalKeeper.Image = Properties.Resources.right_save_small; break;
+                case "top": goalKeeper.Image = Properties.Resources.top_save_small; break;
+                case "topLeft": goalKeeper.Image = Properties.Resources.top_left_save_small; break;
+                case "topRight": goalKeeper.Image = Properties.Resources.top_right_save_small; break;
+                default: goalKeeper.Image = Properties.Resources.stand_small; break;
+            }
+
+            goalKeeper.SizeMode = PictureBoxSizeMode.Zoom;
         }
+
+
     }
 }
