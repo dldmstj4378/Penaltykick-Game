@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -6,122 +8,122 @@ namespace Penaltykick_Game
 {
     public partial class Form1 : Form
     {
-        NetClient net = new NetClient();
+        private NetClient net = new NetClient();
         private List<PictureBox> goalTarget;
-        string myRole = "-";
-        string kickerName = "-";
-        int p1 = 0, p2 = 0;
+        private string myRole = "-";
+        private string kickerName = "-";
+        private int p1 = 0, p2 = 0;
         private System.Windows.Forms.Timer? shootTimer;
         private System.Windows.Forms.Timer? keeperTimer;
 
+        // 🟡 초기 위치 저장용
+        private Point initialBallPosition;
+        private Point initialKeeperPosition;
+        private Size initialKeeperSize;
+
+        // 🛑 애니메이션 중복 방지용
+        private bool isAnimating = false;
 
         public Form1()
         {
-            InitializeComponent();   // 폼 디자이너 초기화 (가장 먼저!)
-
-            // 🟡 1. 타겟 PictureBox 생성
-            topLeft = new PictureBox();
-            top = new PictureBox();
-            topRight = new PictureBox();
-            left = new PictureBox();
-            right = new PictureBox();
-
-            // 🟡 2. 각 PictureBox 속성 설정 (위치, 크기, 색 등)
-            topLeft.Size = new Size(50, 50);
-            topLeft.Location = new Point(180, 100);
-            topLeft.BackColor = Color.Yellow;
-            topLeft.SizeMode = PictureBoxSizeMode.StretchImage;
-
-            top.Size = new Size(50, 50);
-            top.Location = new Point(370, 100);
-            top.BackColor = Color.Yellow;
-            top.SizeMode = PictureBoxSizeMode.StretchImage;
-
-            topRight.Size = new Size(50, 50);
-            topRight.Location = new Point(560, 100);
-            topRight.BackColor = Color.Yellow;
-            topRight.SizeMode = PictureBoxSizeMode.StretchImage;
-
-            left.Size = new Size(50, 50);
-            left.Location = new Point(200, 270);
-            left.BackColor = Color.Yellow;
-            left.SizeMode = PictureBoxSizeMode.StretchImage;
-
-            right.Size = new Size(50, 50);
-            right.Location = new Point(540, 270);
-            right.BackColor = Color.Yellow;
-            right.SizeMode = PictureBoxSizeMode.StretchImage;
-
-            // 🟡 3. 폼에 추가 (실제로 보여지게 하기)
-            this.Controls.Add(topLeft);
-            this.Controls.Add(top);
-            this.Controls.Add(topRight);
-            this.Controls.Add(left);
-            this.Controls.Add(right);
-
-            // 🟡 4. goalTarget 리스트에 담기 (공통 제어용)
+            InitializeComponent();
             goalTarget = new List<PictureBox> { topLeft, top, topRight, left, right };
-        }
 
+            net.OnLine += OnLine;
 
+            // Parent를 goalBackground로 고정
+            goalKeeper.Parent = goalBackground;
+            football.Parent = goalBackground;
+            foreach (var t in goalTarget) t.Parent = goalBackground;
 
+            this.Load += Form1_Load;
+            this.Resize += (s, e) => PositionElements();
 
-        private void ChangeGoalKeeperImage(string direction)
-        {
-            switch (direction)
-            {
-                case "left":
-                    goalKeeper.Image = Properties.Resources.left_save_small;
-                    break;
-                case "right":
-                    goalKeeper.Image = Properties.Resources.right_save_small;
-                    break;
-                case "top":
-                    goalKeeper.Image = Properties.Resources.top_save_small;
-                    break;
-                case "topLeft":
-                    goalKeeper.Image = Properties.Resources.top_left_save_small;
-                    break;
-                case "topRight":
-                    goalKeeper.Image = Properties.Resources.top_right_save_small;
-                    break;
-                default:
-                    goalKeeper.Image = Properties.Resources.stand_small;
-                    break;
-            }
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            InitializePositions();
-            SetTargetsEnabled(false);
+            PositionElements();
 
-            // Z-Order 보정
-            topLeft.BringToFront();
-            top.BringToFront();
-            topRight.BringToFront();
-            left.BringToFront();
-            right.BringToFront();
-            football.BringToFront();
+            // 📌 초기 위치 저장
+            initialBallPosition = football.Location;
+            initialKeeperPosition = goalKeeper.Location;
+            initialKeeperSize = goalKeeper.Size;
+        }
+
+        private void PositionElements()
+        {
+            // 🟩 초록색 배경
+            goalBackground.Width = 915;
+            goalBackground.Height = 717;
+            goalBackground.SizeMode = PictureBoxSizeMode.StretchImage;
+            goalBackground.Left = (this.ClientSize.Width - goalBackground.Width) / 2;
+            goalBackground.Top = 110;
+            
+
+            // 🧤 골키퍼
+            goalKeeper.Width = 80;
+            goalKeeper.Height = 130;
+            goalKeeper.Location = new Point(
+                (goalBackground.Width - goalKeeper.Width) / 2,
+                190
+            );
+
+            // ⚽ 축구공
+            football.Width = 50;
+            football.Height = 50;
+            football.Location = new Point(
+                (goalBackground.Width - football.Width) / 2,
+                530
+            );
+
+            // 🟡 타겟
+            topLeft.Location = new Point(200, 80);
+            top.Location = new Point(437, 80);
+            topRight.Location = new Point(680, 80);
+            left.Location = new Point(200, 245);
+            right.Location = new Point(680, 245);
+
+            foreach (var t in goalTarget)
+            {
+                t.Width = 50;
+                t.Height = 50;
+                t.BackColor = Color.Yellow;
+                t.SizeMode = PictureBoxSizeMode.StretchImage;
+                t.BringToFront();
+            }
+
+            goalKeeper.BackColor = Color.Transparent;
+            football.BackColor = Color.Transparent;
+
             goalKeeper.BringToFront();
+            football.BringToFront();
         }
 
         private void InitializePositions()
         {
-            // 공 위치 초기화
-            football.Location = new Point(430, 500);
-
-            // 골키퍼 위치 초기화
-            goalKeeper.Location = new Point(418, 169);
+            PositionElements();
             goalKeeper.Image = Properties.Resources.stand_small;
-
-            // 타겟 색상 초기화
-            foreach (PictureBox target in goalTarget)
-            {
-                target.BackColor = Color.Yellow;
-            }
         }
 
+        // 🧭 위치 리셋 함수
+        private void ResetPositions()
+        {
+            goalKeeper.Location = initialKeeperPosition;
+            goalKeeper.Size = initialKeeperSize;
+            goalKeeper.Image = Properties.Resources.stand_small;
+
+            football.Location = initialBallPosition;
+
+            shootTimer?.Stop();
+            keeperTimer?.Stop();
+            shootTimer = null;
+            keeperTimer = null;
+
+            isAnimating = false;
+        }
 
         private async void btnConnect_Click(object sender, EventArgs e)
         {
@@ -131,20 +133,17 @@ namespace Penaltykick_Game
                 lblStatus.Text = "상태: 서버 연결 실패";
         }
 
-        private async void btnRegister_Click(object sender, EventArgs e)
-        {
+        private async void btnRegister_Click(object sender, EventArgs e) =>
             await net.Send($"REGISTER {txtUser.Text.Trim()} {txtPass.Text}");
-        }
 
         private async void btnLogin_Click(object sender, EventArgs e)
         {
             await net.Send($"LOGIN {txtUser.Text.Trim()} {txtPass.Text}");
+            MessageBox.Show("로그인 완료!");
         }
 
-        private async void btnReady_Click(object sender, EventArgs e)
-        {
+        private async void btnReady_Click(object sender, EventArgs e) =>
             await net.Send("READY");
-        }
 
         private async void Target_Click(object sender, EventArgs e)
         {
@@ -154,7 +153,6 @@ namespace Penaltykick_Game
             else if (myRole == "GOALKEEPER")
                 await net.Send($"SAVE:{target}");
 
-            // 내 선택 뒤에는 비활성화 (상대/타이머 대기)
             SetTargetsEnabled(false);
         }
 
@@ -184,7 +182,6 @@ namespace Penaltykick_Game
                 lblRound.Text = "Kicker: " + kickerName;
                 InitializePositions();
             }
-
             else if (line.StartsWith("ROUND_START"))
             {
                 var parts = line.Split('|');
@@ -193,8 +190,6 @@ namespace Penaltykick_Game
                 SetTargetsEnabled(true);
                 InitializePositions();
             }
-
-
             else if (line.StartsWith("RESULT:"))
             {
                 var parts = line.Split('|');
@@ -208,28 +203,26 @@ namespace Penaltykick_Game
                 lblScore.Text = $"Score {p1}:{p2}";
 
                 AnimateShoot(shooterDir);
+                AnimateGoalkeeper(keeperDir);
                 ChangeGoalKeeperImage(keeperDir);
 
                 lblStatus.Text = result == "goal" ? "⚽ 골!" : "🧤 세이브!";
 
+                // ⏳ 애니메이션 종료 후 위치 초기화
                 var delayTimer = new System.Windows.Forms.Timer { Interval = 2000 };
                 delayTimer.Tick += (s, e) =>
                 {
                     delayTimer.Stop();
-                    InitializePositions();
+                    ResetPositions();
                     SetTargetsEnabled(false);
                 };
                 delayTimer.Start();
             }
-
-
-
             else if (line.StartsWith("GAME_OVER"))
             {
                 shootTimer?.Stop();
                 keeperTimer?.Stop();
-
-                InitializePositions(); // 공 & 골키퍼 원위치
+                InitializePositions();
                 SetTargetsEnabled(false);
 
                 var winner = line.Split('|').First(x => x.StartsWith("winner=")).Split('=')[1];
@@ -239,70 +232,99 @@ namespace Penaltykick_Game
             }
         }
 
-
-
         private void SetTargetsEnabled(bool enabled)
         {
-            foreach (var pb in new[] { topLeft, top, topRight, left, right })
+            foreach (var pb in goalTarget)
                 pb.Enabled = enabled;
         }
 
+        // ⚽ 공 애니메이션
         private void AnimateShoot(string direction)
         {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            football.Location = initialBallPosition;
+
             int targetX = football.Left;
             int targetY = goalBackground.Top + 180;
 
             switch (direction)
             {
-                case "left": targetX = goalBackground.Left + 200; break;
-                case "right": targetX = goalBackground.Left + 500; break;
-                case "top": targetX = goalBackground.Left + 350; targetY = goalBackground.Top + 100; break;
-                case "topLeft": targetX = goalBackground.Left + 200; targetY = goalBackground.Top + 100; break;
-                case "topRight": targetX = goalBackground.Left + 500; targetY = goalBackground.Top + 100; break;
+                case "left": targetX = goalBackground.Left + 220; break;
+                case "right": targetX = goalBackground.Left + 480; break;
+                case "top": targetX = goalBackground.Left + 350; targetY = goalBackground.Top + 110; break;
+                case "topLeft": targetX = goalBackground.Left + 220; targetY = goalBackground.Top + 110; break;
+                case "topRight": targetX = goalBackground.Left + 480; targetY = goalBackground.Top + 110; break;
             }
 
             shootTimer?.Stop();
-            shootTimer = new System.Windows.Forms.Timer { Interval = 10 };
+            shootTimer = new System.Windows.Forms.Timer();
+            shootTimer.Interval = 15;
             shootTimer.Tick += (s, e) =>
             {
-                football.Left += (targetX - football.Left) / 10;
-                football.Top += (targetY - football.Top) / 10;
-                if (Math.Abs(football.Left - targetX) < 5 && Math.Abs(football.Top - targetY) < 5)
+                football.Left += (targetX - football.Left) / 8;
+                football.Top += (targetY - football.Top) / 8;
+                if (Math.Abs(football.Left - targetX) < 4 && Math.Abs(football.Top - targetY) < 4)
                 {
                     shootTimer.Stop();
+                    shootTimer = null;
                 }
             };
             shootTimer.Start();
         }
 
-
+        // 🧤 골키퍼 애니메이션
         private void AnimateGoalkeeper(string direction)
         {
+            goalKeeper.Location = initialKeeperPosition;
+            goalKeeper.Size = initialKeeperSize;
+
             int targetX = goalKeeper.Left;
             int targetY = goalKeeper.Top;
 
             switch (direction)
             {
-                case "left": targetX = goalBackground.Left + 250; break;
-                case "right": targetX = goalBackground.Left + 450; break;
+                case "left": targetX = goalBackground.Left + 260; break;
+                case "right": targetX = goalBackground.Left + 440; break;
                 case "top": targetY = goalBackground.Top + 200; break;
-                case "topLeft": targetX = goalBackground.Left + 250; targetY = goalBackground.Top + 200; break;
-                case "topRight": targetX = goalBackground.Left + 450; targetY = goalBackground.Top + 200; break;
+                case "topLeft": targetX = goalBackground.Left + 260; targetY = goalBackground.Top + 200; break;
+                case "topRight": targetX = goalBackground.Left + 440; targetY = goalBackground.Top + 200; break;
             }
 
             keeperTimer?.Stop();
-            keeperTimer = new System.Windows.Forms.Timer { Interval = 10 };
+            keeperTimer = new System.Windows.Forms.Timer();
+            keeperTimer.Interval = 15;
             keeperTimer.Tick += (s, e) =>
             {
-                goalKeeper.Left += (targetX - goalKeeper.Left) / 10;
-                goalKeeper.Top += (targetY - goalKeeper.Top) / 10;
-                if (Math.Abs(goalKeeper.Left - targetX) < 5 && Math.Abs(goalKeeper.Top - targetY) < 5)
+                goalKeeper.Left += (targetX - goalKeeper.Left) / 8;
+                goalKeeper.Top += (targetY - goalKeeper.Top) / 8;
+                if (Math.Abs(goalKeeper.Left - targetX) < 4 && Math.Abs(goalKeeper.Top - targetY) < 4)
                 {
                     keeperTimer.Stop();
+                    keeperTimer = null;
                 }
             };
             keeperTimer.Start();
         }
 
+        private void ChangeGoalKeeperImage(string direction)
+        {
+            switch (direction)
+            {
+                case "left":
+                    goalKeeper.Image = Properties.Resources.left_save_small; break;
+                case "right":
+                    goalKeeper.Image = Properties.Resources.right_save_small; break;
+                case "top":
+                    goalKeeper.Image = Properties.Resources.top_save_small; break;
+                case "topLeft":
+                    goalKeeper.Image = Properties.Resources.top_left_save_small; break;
+                case "topRight":
+                    goalKeeper.Image = Properties.Resources.top_right_save_small; break;
+                default:
+                    goalKeeper.Image = Properties.Resources.stand_small; break;
+            }
+        }
     }
 }

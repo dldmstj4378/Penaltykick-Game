@@ -38,7 +38,7 @@
         {
             components = new System.ComponentModel.Container();
 
-            // 🔹 상단 UI
+            // 🟡 상단 UI
             txtHost = new TextBox() { Left = 20, Top = 15, Width = 120, Text = "127.0.0.1" };
             txtPort = new TextBox() { Left = 145, Top = 15, Width = 60, Text = "9000" };
             txtUser = new TextBox() { Left = 210, Top = 15, Width = 120, PlaceholderText = "ID" };
@@ -53,14 +53,14 @@
             lblScore = new Label() { Left = 350, Top = 80, Width = 200, Text = "Score 0:0" };
             lblRound = new Label() { Left = 600, Top = 80, Width = 250, Text = "Round 0" };
 
-            // 🟢 골대 배경
+            // 🥅 골대 배경
             goalBackground = new PictureBox()
             {
                 Left = 20,
                 Top = 110,
                 Width = 800,
                 Height = 450,
-                Image = Properties.Resources.background, // 리소스 이름 주의
+                Image = Properties.Resources.background,
                 SizeMode = PictureBoxSizeMode.StretchImage
             };
 
@@ -71,27 +71,36 @@
                 Height = 50,
                 BackColor = Color.Transparent,
                 Image = Properties.Resources.football,
-                SizeMode = PictureBoxSizeMode.StretchImage,
-                Location = new Point(375, 520)
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Location = new System.Drawing.Point(400, 520)
             };
 
             // 🧤 골키퍼
             goalKeeper = new PictureBox()
             {
-                Width = 100,
-                Height = 150,
+                Width = 90,
+                Height = 130,
                 BackColor = Color.Transparent,
                 Image = Properties.Resources.stand_small,
-                SizeMode = PictureBoxSizeMode.StretchImage,
-                Location = new Point(350, 200)
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Location = new System.Drawing.Point(380, 210)
             };
 
-            // 🎯 타겟 5개
-            topLeft = CreateTarget(190, 150, "topLeft");
-            top = CreateTarget(375, 150, "top");
-            topRight = CreateTarget(560, 150, "topRight");
+            // 🎯 타겟 (좌표 및 크기 고정)
+            topLeft = CreateTarget(190, 140, "topLeft");
+            top = CreateTarget(375, 140, "top");
+            topRight = CreateTarget(560, 140, "topRight");
             left = CreateTarget(200, 300, "left");
             right = CreateTarget(540, 300, "right");
+
+            // 🔹 투명 배경 설정
+            goalKeeper.BackColor = Color.Transparent;
+            football.BackColor = Color.Transparent;
+            topLeft.BackColor = Color.Transparent;
+            top.BackColor = Color.Transparent;
+            topRight.BackColor = Color.Transparent;
+            left.BackColor = Color.Transparent;
+            right.BackColor = Color.Transparent;
 
             // 🧭 폼에 추가
             Controls.AddRange(new Control[]
@@ -106,25 +115,28 @@
 
             // 🪄 폼 설정
             Text = "Penaltykick Game";
-            ClientSize = new Size(860, 650);
+            ClientSize = new System.Drawing.Size(860, 800);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
-            DoubleBuffered = true; // 깜빡임 방지
+            DoubleBuffered = true;
             BackgroundImageLayout = ImageLayout.Stretch;
-            Load += Form1_Load;
 
-            // 🧭 컨트롤 클릭 이벤트
+            // 이벤트
             btnConnect.Click += btnConnect_Click;
             btnRegister.Click += btnRegister_Click;
             btnLogin.Click += btnLogin_Click;
             btnReady.Click += btnReady_Click;
 
-            // 골키퍼와 공을 맨 앞으로
             goalKeeper.BringToFront();
             football.BringToFront();
+            topLeft.BringToFront();
+            top.BringToFront();
+            topRight.BringToFront();
+            left.BringToFront();
+            right.BringToFront();
         }
 
-        // 🎯 타겟 생성 함수
+
         private PictureBox CreateTarget(int x, int y, string tag)
         {
             var pb = new PictureBox()
@@ -136,11 +148,14 @@
                 Tag = tag,
                 BackColor = Color.Transparent,
                 Image = Properties.Resources.target,
-                SizeMode = PictureBoxSizeMode.StretchImage,
+                SizeMode = PictureBoxSizeMode.Zoom,
                 Cursor = Cursors.Hand
             };
             pb.Click += Target_Click;
             return pb;
         }
+
+
+
     }
 }
