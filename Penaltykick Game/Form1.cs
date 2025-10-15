@@ -138,9 +138,23 @@ namespace Penaltykick_Game
 
         private async void btnLogin_Click(object sender, EventArgs e)
         {
-            await net.Send($"LOGIN {txtUser.Text.Trim()} {txtPass.Text}");
-            MessageBox.Show("로그인 완료!");
+            if (net == null)
+            {
+                MessageBox.Show("서버 연결이 없습니다.");
+                return;
+            }
+
+            try
+            {
+                await net.Send($"LOGIN {txtUser.Text.Trim()} {txtPass.Text}");
+                MessageBox.Show("로그인 완료!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"서버 연결 오류: {ex.Message}");
+            }
         }
+
 
         private async void btnReady_Click(object sender, EventArgs e) =>
             await net.Send("READY");
@@ -251,11 +265,30 @@ namespace Penaltykick_Game
 
             switch (direction)
             {
-                case "left": targetX = goalBackground.Left + 220; break;
-                case "right": targetX = goalBackground.Left + 480; break;
-                case "top": targetX = goalBackground.Left + 350; targetY = goalBackground.Top + 110; break;
-                case "topLeft": targetX = goalBackground.Left + 220; targetY = goalBackground.Top + 110; break;
-                case "topRight": targetX = goalBackground.Left + 480; targetY = goalBackground.Top + 110; break;
+                case "left":
+                    targetX = left.Left;
+                    targetY = left.Top;
+                    break;
+
+                case "right":
+                    targetX = right.Left;
+                    targetY = right.Top;
+                    break;
+
+                case "topLeft":
+                    targetX = topLeft.Left;
+                    targetY = topLeft.Top;
+                    break;
+
+                case "top":
+                    targetX = top.Left;
+                    targetY = top.Top;
+                    break;
+
+                case "topRight":
+                    targetX = topRight.Left;
+                    targetY = topRight.Top;
+                    break;
             }
 
             shootTimer?.Stop();
