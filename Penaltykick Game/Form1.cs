@@ -47,6 +47,10 @@ namespace Penaltykick_Game
             this.lblUserInfo.AutoSize = true;
             this.lblUserInfo.Font = new Font("맑은 고딕", 14F, FontStyle.Bold);
             this.lblUserInfo.Location = new Point(200, 50);   // 원하는 위치로 조정 가능
+
+            //this.lblUserInfo.Paint += new System.Windows.Forms.PaintEventHandler(this.lblUserInfo_Paint);
+            //this.DoubleBuffered = true;
+
             this.lblUserInfo.Text = "";
             this.Controls.Add(this.lblUserInfo);
 
@@ -196,7 +200,7 @@ namespace Penaltykick_Game
                     string losses = parts[3];
                     string rank = parts[4];
 
-                    // 🏅 랭크별 아이콘 지정
+                     //🏅 랭크별 아이콘 지정
                     //string rankIcon = rank switch
                     //{
                     //    "Bronze" => "🥉",
@@ -207,28 +211,28 @@ namespace Penaltykick_Game
                     //    _ => ""
                     //};
 
-                    //// 🎨 랭크별 색상 지정
-                    //switch (rank)
-                    //{
-                    //    case "Bronze":
-                    //        lblUserInfo.ForeColor = Color.SaddleBrown;
-                    //        break;
-                    //    case "Silver":
-                    //        lblUserInfo.ForeColor = Color.Silver;
-                    //        break;
-                    //    case "Gold":
-                    //        lblUserInfo.ForeColor = Color.Gold;
-                    //        break;
-                    //    case "Platinum":
-                    //        lblUserInfo.ForeColor = Color.LightCyan;
-                    //        break;
-                    //    case "Diamond":
-                    //        lblUserInfo.ForeColor = Color.DeepSkyBlue;
-                    //        break;
-                    //    default:
-                    //        lblUserInfo.ForeColor = Color.White;
-                    //        break;
-                    //}
+                    // 🎨 랭크별 색상 지정
+                    switch (rank)
+                    {
+                        case "Bronze":
+                            lblUserInfo.ForeColor = Color.SaddleBrown;
+                            break;
+                        case "Silver":
+                            lblUserInfo.ForeColor = Color.DimGray;
+                            break;
+                        case "Gold":
+                            lblUserInfo.ForeColor = Color.Gold;
+                            break;
+                        case "Platinum":
+                            lblUserInfo.ForeColor = Color.MediumTurquoise;
+                            break;
+                        case "Diamond":
+                            lblUserInfo.ForeColor = Color.DeepSkyBlue;
+                            break;
+                        default:
+                            lblUserInfo.ForeColor = Color.White;
+                            break;
+                    }
 
                     lblStatus.Text = "로그인 성공";
                     lblUserInfo.Text = $"닉네임 : {username}   승 : {wins}   패 : {losses}   랭크 : {rank}";
@@ -345,25 +349,25 @@ namespace Penaltykick_Game
                     string oldRank = currentRank;
                     currentRank = rank;
 
-                    //string rankIcon = rank switch
-                    //{
-                    //    "Bronze" => "🥉",
-                    //    "Silver" => "🥈",
-                    //    "Gold" => "🥇",
-                    //    "Platinum" => "💠",
-                    //    "Diamond" => "💎",
-                    //    _ => ""
-                    //};
+                    string rankIcon = rank switch
+                    {
+                        "Bronze" => "🥉",
+                        "Silver" => "🥈",
+                        "Gold" => "🥇",
+                        "Platinum" => "💠",
+                        "Diamond" => "💎",
+                        _ => ""
+                    };
 
-                    //switch (rank)
-                    //{
-                    //    case "Bronze": lblUserInfo.ForeColor = Color.SaddleBrown; break;
-                    //    case "Silver": lblUserInfo.ForeColor = Color.Silver; break;
-                    //    case "Gold": lblUserInfo.ForeColor = Color.Gold; break;
-                    //    case "Platinum": lblUserInfo.ForeColor = Color.LightCyan; break;
-                    //    case "Diamond": lblUserInfo.ForeColor = Color.DeepSkyBlue; break;
-                    //    default: lblUserInfo.ForeColor = Color.White; break;
-                    //}
+                    switch (rank)
+                    {
+                        case "Bronze": lblUserInfo.ForeColor = Color.SaddleBrown; break;
+                        case "Silver": lblUserInfo.ForeColor = Color.DimGray; break;
+                        case "Gold": lblUserInfo.ForeColor = Color.Gold; break;
+                        case "Platinum": lblUserInfo.ForeColor = Color.MediumTurquoise; break;
+                        case "Diamond": lblUserInfo.ForeColor = Color.DeepSkyBlue; break;
+                        default: lblUserInfo.ForeColor = Color.White; break;
+                    }
 
                     lblUserInfo.Text = $"닉네임 : {username}   승 : {wins}   패 : {losses}   랭크 : {rank}";
 
@@ -546,5 +550,18 @@ namespace Penaltykick_Game
                 t.Enabled = enabled;
             }
         }
+        //private void lblUserInfo_Paint(object sender, PaintEventArgs e)
+        //{
+        //    // 더 깔끔한 글씨 렌더링
+        //    e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+        //    // 폰트는 Segoe UI Emoji를 반드시 사용
+        //    using (Font font = new Font("Segoe UI Emoji", 14F, FontStyle.Bold))
+        //    using (Brush brush = new SolidBrush(lblUserInfo.ForeColor))
+        //    {
+        //        e.Graphics.DrawString(lblUserInfo.Text, font, brush, 0, 0);
+        //    }
+        //}
+
     }
 }
