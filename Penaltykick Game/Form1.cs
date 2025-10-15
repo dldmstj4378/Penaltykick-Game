@@ -23,6 +23,7 @@ namespace Penaltykick_Game
 
         // 🛑 애니메이션 중복 방지용
         private bool isAnimating = false;
+        private System.Windows.Forms.Label lblUserInfo;
 
         public Form1()
         {
@@ -41,6 +42,14 @@ namespace Penaltykick_Game
 
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
+            this.lblUserInfo = new System.Windows.Forms.Label();
+            this.lblUserInfo.AutoSize = true;
+            this.lblUserInfo.Font = new Font("맑은 고딕", 14F, FontStyle.Bold);
+            this.lblUserInfo.Location = new Point(200, 50);   // 원하는 위치로 조정 가능
+            this.lblUserInfo.Text = "";
+            this.Controls.Add(this.lblUserInfo);
+
+            this.lblUserInfo.BringToFront();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -138,21 +147,16 @@ namespace Penaltykick_Game
 
         private async void btnLogin_Click(object sender, EventArgs e)
         {
-            if (net == null)
+            string user = txtUser.Text.Trim();
+            string pass = txtPass.Text.Trim();
+            if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
             {
-                MessageBox.Show("서버 연결이 없습니다.");
+                lblStatus.Text = "아이디와 비밀번호를 입력하세요.";
                 return;
             }
 
-            try
-            {
-                await net.Send($"LOGIN {txtUser.Text.Trim()} {txtPass.Text}");
-                MessageBox.Show("로그인 완료!");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"서버 연결 오류: {ex.Message}");
-            }
+            await net.Send($"LOGIN {user} {pass}");
+            Console.WriteLine($"[CLIENT] LOGIN {user} {pass}");
         }
 
 
@@ -161,12 +165,14 @@ namespace Penaltykick_Game
 
         private async void Target_Click(object sender, EventArgs e)
         {
+            // 클릭된 타겟 방향 추출
             string target = ((PictureBox)sender).Tag.ToString()!;
             if (myRole == "KICKER")
                 await net.Send($"SHOOT:{target}");
             else if (myRole == "GOALKEEPER")
                 await net.Send($"SAVE:{target}");
 
+            // 클릭 후 타겟 버튼 비활성화
             SetTargetsEnabled(false);
         }
 
@@ -174,9 +180,71 @@ namespace Penaltykick_Game
 
         private void HandleServerMessage(string line)
         {
+            // 디버그: 어떤 문자열을 받는지 항상 확인
+            //Console.WriteLine($"[CLIENT RECV] {line}");
+
+            if (line.StartsWith("LOGIN_OK"))
+            {
+                // 공백 분리
+                string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                if (parts.Length >= 5)
+                {
+                    string username = parts[1];
+                    string wins = parts[2];
+                    string losses = parts[3];
+                    string rank = parts[4];
+
+                    // 🏅 랭크별 아이콘 지정
+                    //string rankIcon = rank switch
+                    //{
+                    //    "Bronze" => "🥉",
+                    //    "Silver" => "🥈",
+                    //    "Gold" => "🥇",
+                    //    "Platinum" => "💠",   // ✨ 또는 🪙, 🪞 도 가능
+                    //    "Diamond" => "💎",
+                    //    _ => ""
+                    //};
+
+                    //// 🎨 랭크별 색상 지정
+                    //switch (rank)
+                    //{
+                    //    case "Bronze":
+                    //        lblUserInfo.ForeColor = Color.SaddleBrown;
+                    //        break;
+                    //    case "Silver":
+                    //        lblUserInfo.ForeColor = Color.Silver;
+                    //        break;
+                    //    case "Gold":
+                    //        lblUserInfo.ForeColor = Color.Gold;
+                    //        break;
+                    //    case "Platinum":
+                    //        lblUserInfo.ForeColor = Color.LightCyan;
+                    //        break;
+                    //    case "Diamond":
+                    //        lblUserInfo.ForeColor = Color.DeepSkyBlue;
+                    //        break;
+                    //    default:
+                    //        lblUserInfo.ForeColor = Color.White;
+                    //        break;
+                    //}
+
+                    lblStatus.Text = "로그인 성공";
+                    lblUserInfo.Text = $"닉네임 : {username}   승 : {wins}   패 : {losses}   랭크 : {rank}";
+                }
+                else
+                {
+                    // 서버가 구형 포맷(= "LOGIN_OK"만)인 경우
+                    lblStatus.Text = "로그인 성공";
+                    lblUserInfo.Text = "";  // 정보가 안 왔음을 표시하고 싶으면 메시지로 바꿔도 됨
+                                            // TODO: 서버를 아래 포맷으로 보내도록 업데이트
+                                            //  LOGIN_OK <username> <wins> <losses> <rank>
+                }
+                return;
+            }
+
             if (line == "REGISTER_OK") lblStatus.Text = "회원가입 성공";
             else if (line == "REGISTER_FAIL") lblStatus.Text = "회원가입 실패";
-            else if (line == "LOGIN_OK") lblStatus.Text = "로그인 성공";
             else if (line == "LOGIN_FAIL") lblStatus.Text = "로그인 실패";
             else if (line == "QUEUED") lblStatus.Text = "매칭 대기중...";
             else if (line.StartsWith("MATCH_START"))
@@ -222,7 +290,6 @@ namespace Penaltykick_Game
 
                 lblStatus.Text = result == "goal" ? "⚽ 골!" : "🧤 세이브!";
 
-                // ⏳ 애니메이션 종료 후 위치 초기화
                 var delayTimer = new System.Windows.Forms.Timer { Interval = 2000 };
                 delayTimer.Tick += (s, e) =>
                 {
@@ -246,10 +313,23 @@ namespace Penaltykick_Game
             }
         }
 
+
+
         private void SetTargetsEnabled(bool enabled)
         {
             foreach (var pb in goalTarget)
                 pb.Enabled = enabled;
+        }
+
+        // ========================
+        // ⏳ 타겟을 일정 시간 후 다시 활성화
+        // ========================
+        private async Task EnableTargetsAfterDelay(int ms = 1000)
+        {
+            await Task.Delay(ms);
+            SetTargetsEnabled(true);
+            foreach (var pb in goalTarget)
+                pb.BringToFront();    // ⚠️ 골키퍼나 공이 덮지 않도록 맨 앞으로
         }
 
         // ⚽ 공 애니메이션
@@ -265,43 +345,27 @@ namespace Penaltykick_Game
 
             switch (direction)
             {
-                case "left":
-                    targetX = left.Left;
-                    targetY = left.Top;
-                    break;
-
-                case "right":
-                    targetX = right.Left;
-                    targetY = right.Top;
-                    break;
-
-                case "topLeft":
-                    targetX = topLeft.Left;
-                    targetY = topLeft.Top;
-                    break;
-
-                case "top":
-                    targetX = top.Left;
-                    targetY = top.Top;
-                    break;
-
-                case "topRight":
-                    targetX = topRight.Left;
-                    targetY = topRight.Top;
-                    break;
+                case "left": targetX = left.Left; targetY = left.Top; break;
+                case "right": targetX = right.Left; targetY = right.Top; break;
+                case "topLeft": targetX = topLeft.Left; targetY = topLeft.Top; break;
+                case "top": targetX = top.Left; targetY = top.Top; break;
+                case "topRight": targetX = topRight.Left; targetY = topRight.Top; break;
             }
 
             shootTimer?.Stop();
             shootTimer = new System.Windows.Forms.Timer();
             shootTimer.Interval = 15;
-            shootTimer.Tick += (s, e) =>
+            shootTimer.Tick += async (s, e) =>
             {
                 football.Left += (targetX - football.Left) / 8;
                 football.Top += (targetY - football.Top) / 8;
+
                 if (Math.Abs(football.Left - targetX) < 4 && Math.Abs(football.Top - targetY) < 4)
                 {
                     shootTimer.Stop();
                     shootTimer = null;
+                    isAnimating = false;       // ✅ 클릭 차단 해제
+                    await EnableTargetsAfterDelay(); // ✅ 클릭 복구
                 }
             };
             shootTimer.Start();
@@ -320,28 +384,28 @@ namespace Penaltykick_Game
             switch (direction)
             {
                 case "left":
-                    targetX = left.Left + 10;      // ← 살짝 왼쪽으로 더 이동
-                    targetY = left.Top - 20;       // ↑ 위로 살짝
+                    targetX = left.Left + 10;
+                    targetY = left.Top - 20;
                     break;
 
                 case "right":
-                    targetX = right.Left - 140;     // → 오른쪽으로 더 이동
+                    targetX = right.Left - 140;
                     targetY = right.Top - 25;
                     break;
 
                 case "topLeft":
-                    targetX = topLeft.Left + 10;   // ← 살짝 왼쪽
-                    targetY = topLeft.Top + 20;    // ↑ 많이 위로
+                    targetX = topLeft.Left + 10;
+                    targetY = topLeft.Top + 20;
                     break;
 
                 case "topRight":
-                    targetX = topRight.Left - 110;  // → 살짝 오른쪽
+                    targetX = topRight.Left - 110;
                     targetY = topRight.Top + 20;
                     break;
 
                 case "top":
                     targetX = top.Left - 60;
-                    targetY = top.Top + 20;        // ↑ 정중앙에서 많이 위로
+                    targetY = top.Top + 20;
                     break;
             }
 
@@ -352,10 +416,12 @@ namespace Penaltykick_Game
             {
                 goalKeeper.Left += (targetX - goalKeeper.Left) / 8;
                 goalKeeper.Top += (targetY - goalKeeper.Top) / 8;
+
                 if (Math.Abs(goalKeeper.Left - targetX) < 4 && Math.Abs(goalKeeper.Top - targetY) < 4)
                 {
                     keeperTimer.Stop();
                     keeperTimer = null;
+                    isAnimating = false; // ✅ 골키퍼 애니메이션 끝나면 클릭 차단 해제
                 }
             };
             keeperTimer.Start();
