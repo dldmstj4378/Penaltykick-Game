@@ -349,15 +349,15 @@ namespace Penaltykick_Game
                     string oldRank = currentRank;
                     currentRank = rank;
 
-                    string rankIcon = rank switch
-                    {
-                        "Bronze" => "🥉",
-                        "Silver" => "🥈",
-                        "Gold" => "🥇",
-                        "Platinum" => "💠",
-                        "Diamond" => "💎",
-                        _ => ""
-                    };
+                    //string rankIcon = rank switch
+                    //{
+                    //    "Bronze" => "🥉",
+                    //    "Silver" => "🥈",
+                    //    "Gold" => "🥇",
+                    //    "Platinum" => "💠",
+                    //    "Diamond" => "💎",
+                    //    _ => ""
+                    //};
 
                     switch (rank)
                     {
