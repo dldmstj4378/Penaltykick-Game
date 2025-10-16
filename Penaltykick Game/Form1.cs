@@ -40,6 +40,7 @@ namespace Penaltykick_Game
             _wins = wins;
             _losses = losses;
             _rank = rank;
+            currentRank = rank;
 
             lblStatus.Text = "로그인 완료";
             lblStatus.Font = new Font("맑은 고딕", 14F, FontStyle.Bold);  // 글씨 키우기 & Bold
@@ -195,6 +196,8 @@ namespace Penaltykick_Game
                     string losses = parts[3];
                     string rank = parts[4];
 
+                    currentRank = rank;
+
                     // 색상 + 텍스트 UI 업데이트만 남김
                     switch (rank)
                     {
@@ -207,6 +210,7 @@ namespace Penaltykick_Game
                     }
 
                     lblStatus.Text = "로그인 성공";
+                    
                     lblUserInfo.Text = $"닉네임 : {username}   승 : {wins}   패 : {losses}   랭크 : {rank}";
                 }
                 return;
@@ -297,7 +301,6 @@ namespace Penaltykick_Game
                 MessageBox.Show($"Winner: {winner}\nFinal: {final}", "Game Over");
                 lblStatus.Text = "게임 종료";
 
-                // ✅ 게임이 끝나면 서버에 최신 전적 요청
                 _ = net.Send("REQ_RECORD");
             }
             else if (line.StartsWith("RECORD "))
@@ -310,10 +313,12 @@ namespace Penaltykick_Game
                     string losses = parts[3];
                     string rank = parts[4];
 
-                    // 🔸 이전 랭크 저장 후 변경 확인
-                    string oldRank = currentRank;
+                    string oldRank = !string.IsNullOrEmpty(currentRank) ? currentRank : _rank;
+                    bool rankChanged = oldRank != rank;
+
                     currentRank = rank;
 
+                    // 색상 업데이트
                     switch (rank)
                     {
                         case "Bronze": lblUserInfo.ForeColor = Color.SaddleBrown; break;
@@ -326,14 +331,20 @@ namespace Penaltykick_Game
 
                     lblUserInfo.Text = $"닉네임 : {username}   승 : {wins}   패 : {losses}   랭크 : {rank}";
 
-                    // 🟡 랭크가 바뀌었으면 메시지 띄우기
-                    if (!string.IsNullOrEmpty(oldRank) && oldRank != currentRank)
+                    if (rankChanged && !string.IsNullOrEmpty(oldRank))
                     {
-                        string msg = $"랭크가 {oldRank} ➝ {currentRank}(으)로 변경되었습니다!";
-                        MessageBox.Show(msg, "랭크 변동", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show(
+                            $"랭크가 {oldRank} ➝ {currentRank}(으)로 변경되었습니다!",
+                            "랭크 변동",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information
+                        );
                     }
                 }
             }
+
+
+
         }
 
 
