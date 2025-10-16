@@ -4,13 +4,6 @@
     {
         private System.ComponentModel.IContainer components = null;
 
-        private TextBox txtHost;
-        private TextBox txtPort;
-        private TextBox txtUser;
-        private TextBox txtPass;
-        private Button btnConnect;
-        private Button btnRegister;
-        private Button btnLogin;
         private Button btnReady;
 
         private Label lblStatus;
@@ -39,14 +32,15 @@
             components = new System.ComponentModel.Container();
 
             // 🟡 상단 UI
-            txtHost = new TextBox() { Left = 20, Top = 15, Width = 120, Text = "127.0.0.1" };
-            txtPort = new TextBox() { Left = 145, Top = 15, Width = 60, Text = "9000" };
-            txtUser = new TextBox() { Left = 210, Top = 15, Width = 120, PlaceholderText = "ID" };
-            txtPass = new TextBox() { Left = 335, Top = 15, Width = 120, PlaceholderText = "PW", UseSystemPasswordChar = true };
-            btnConnect = new Button() { Left = 460, Top = 12, Width = 80, Text = "Connect" };
-            btnRegister = new Button() { Left = 545, Top = 12, Width = 80, Text = "Register" };
-            btnLogin = new Button() { Left = 630, Top = 12, Width = 80, Text = "Login" };
-            btnReady = new Button() { Left = 715, Top = 12, Width = 80, Text = "Ready" };
+            btnReady = new Button()
+            {
+                Left = 700,
+                Top = 15,
+                Width = 120,     // ✅ 버튼 가로 길이 키우기
+                Height = 50,     // ✅ 버튼 세로 길이 키우기
+                Text = "READY",
+                Font = new Font("Segoe UI", 16F, FontStyle.Bold)  // ✅ 글씨 크기 + 굵게
+            };
 
             lblStatus = new Label() { Left = 20, Top = 50, Width = 780, Text = "상태: 서버에 연결하세요." };
             lblRole = new Label() { Left = 20, Top = 80, Width = 200, Text = "역할: -" };
@@ -105,15 +99,14 @@
             // 🧭 폼에 추가
             Controls.AddRange(new Control[]
             {
-                txtHost, txtPort, txtUser, txtPass,
-                btnConnect, btnRegister, btnLogin, btnReady,
+                btnReady,
                 lblStatus, lblRole, lblScore, lblRound,
                 goalBackground,
                 topLeft, top, topRight, left, right,
                 goalKeeper, football
             });
 
-            // 🪄 폼 설정
+            // 폼 설정
             Text = "Penaltykick Game";
             ClientSize = new System.Drawing.Size(860, 800);
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -122,9 +115,6 @@
             BackgroundImageLayout = ImageLayout.Stretch;
 
             // 이벤트
-            btnConnect.Click += btnConnect_Click;
-            btnRegister.Click += btnRegister_Click;
-            btnLogin.Click += btnLogin_Click;
             btnReady.Click += btnReady_Click;
 
             goalKeeper.BringToFront();

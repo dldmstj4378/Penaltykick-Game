@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Penaltykick_Game
 {
-    internal class NetClient
+    public class NetClient
     {
         TcpClient tcp = new TcpClient();
         StreamReader? reader;
